@@ -26,8 +26,9 @@ class Settings(BaseSettings):
     DICOM_PROCESSED_DIR: str = ""
 
     # Session limits
-    SESSION_IDLE_TIMEOUT: int = 900  # 15 minutes
+    SESSION_IDLE_TIMEOUT: int = 900   # 15 minutes
     SESSION_HARD_TIMEOUT: int = 3600  # 60 minutes
+    SESSION_CHECK_INTERVAL: int = 60  # seconds between timeout checks
     MAX_CONCURRENT_SESSIONS: int = 5
 
     model_config = {"env_file": ".env", "extra": "ignore"}
