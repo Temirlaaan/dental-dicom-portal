@@ -1,0 +1,21 @@
+[Unit]
+Description=Dental DICOM Portal — DICOM File Watcher
+Documentation=https://github.com/Temirlaaan/dental-dicom-portal
+After=network.target dental-api.service
+Wants=dental-api.service
+
+[Service]
+Type=simple
+User=dental-app
+Group=dental-app
+WorkingDirectory=/opt/dental-dicom-portal/backend
+EnvironmentFile=/opt/dental-dicom-portal/.env.production
+ExecStart=/opt/dental-dicom-portal/venv/bin/python -m app.services
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dental-dicom-watcher
+
+[Install]
+WantedBy=multi-user.target
