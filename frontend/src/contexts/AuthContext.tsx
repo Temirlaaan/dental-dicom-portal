@@ -69,10 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { access_token, refresh_token } = resp.data;
       setTokens(access_token, refresh_token);
       return access_token;
-    } catch {
+    } catch (error) {
+      // Clear invalid tokens on refresh failure
+      clearTokens();
       return null;
     }
-  }, [setTokens]);
+  }, [setTokens, clearTokens]);
 
   // On mount: check for existing tokens
   useEffect(() => {
