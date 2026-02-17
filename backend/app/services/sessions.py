@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import CurrentUser
 from app.models import Session
 from app.services.winrm_client import WinRMClient
+from app.services.guacamole_client import GuacamoleClient
 from app.core.config import settings
 
 
@@ -23,24 +24,26 @@ async def create_session(
     doctor_id: uuid.UUID,
     patient_id: uuid.UUID,
     winrm_client: WinRMClient,
+    guacamole_client: GuacamoleClient,
 ) -> Session:
     """
-    Create a new RDS session for a doctor-patient pair.
+    Create a new RDS session with Guacamole RDP connection.
 
     Enforces concurrency limits:
     - Per-doctor limit: 1 active session
     - Global limit: MAX_CONCURRENT_SESSIONS (default 5)
 
     Creates session in database, provisions RDS session via WinRM,
-    launches DTX Studio, and updates session status.
+    creates Guacamole RDP connection, launches DTX Studio, and updates session status.
 
-    On failure, attempts cleanup and marks session as terminated.
+    On failure, attempts cleanup of both WinRM and Guacamole resources.
 
     Args:
         db: Database session
         doctor_id: UUID of the doctor
         patient_id: UUID of the patient
         winrm_client: WinRM client for remote operations
+        guacamole_client: Guacamole client for RDP connection management
 
     Returns:
         Created Session object
@@ -91,15 +94,26 @@ async def create_session(
 
     try:
         # Step 1: Create RDS session via WinRM
+        windows_user = f"dtx_user_{session.id.hex[:8]}"
         rds_session_id = await winrm_client.run_script(
             "create-rds-session.ps1",
             {
-                "UserName": f"dtx_user_{session.id.hex[:8]}",
+                "UserName": windows_user,
                 "PatientId": str(patient_id),
             },
         )
 
-        # Step 2: Launch DTX Studio in the RDS session
+        # Step 2: Create Guacamole RDP connection
+        connection_name = f"session_{session.id}"
+        guacamole_connection_id = await guacamole_client.create_rdp_connection(
+            connection_name=connection_name,
+            rdp_hostname=settings.WINDOWS_RDP_HOST,
+            rdp_port=settings.WINDOWS_RDP_PORT,
+            rdp_username=windows_user,
+            rdp_password=settings.WINDOWS_RDP_PASSWORD,
+        )
+
+        # Step 3: Launch DTX Studio in the RDS session
         await winrm_client.run_script(
             "launch-dtx-studio.ps1",
             {
@@ -110,7 +124,8 @@ async def create_session(
 
         # Success: update session to active
         session.rds_session_id = rds_session_id
-        session.windows_user = f"dtx_user_{session.id.hex[:8]}"
+        session.guacamole_connection_id = guacamole_connection_id
+        session.windows_user = windows_user
         session.status = "active"
         session.last_activity_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await db.commit()
@@ -119,7 +134,14 @@ async def create_session(
         return session
 
     except Exception as e:
-        # Rollback: cleanup partial session on WinRM failure
+        # Rollback: cleanup partial resources
+        try:
+            if session.guacamole_connection_id:
+                await guacamole_client.delete_connection(session.guacamole_connection_id)
+        except Exception:
+            # Best-effort cleanup
+            pass
+
         try:
             if session.rds_session_id:
                 await winrm_client.run_script(
@@ -127,7 +149,7 @@ async def create_session(
                     {"SessionId": session.rds_session_id},
                 )
         except Exception:
-            # Best-effort cleanup; log but don't fail
+            # Best-effort cleanup
             pass
 
         # Mark session as terminated
@@ -145,16 +167,19 @@ async def end_session(
     db: AsyncSession,
     session_id: uuid.UUID,
     winrm_client: WinRMClient,
+    guacamole_client: GuacamoleClient,
 ) -> None:
     """
-    Terminate an active session.
+    Terminate an active session and cleanup all resources.
 
-    Runs cleanup script via WinRM, updates session status to terminated.
+    Runs cleanup script via WinRM, deletes Guacamole connection,
+    and updates session status to terminated.
 
     Args:
         db: Database session
         session_id: UUID of the session to terminate
         winrm_client: WinRM client for remote operations
+        guacamole_client: Guacamole client for connection cleanup
 
     Raises:
         HTTPException: 404 if session not found
@@ -167,6 +192,13 @@ async def end_session(
     if session.status == "terminated":
         raise HTTPException(status_code=400, detail="Session already terminated")
 
+    # Cleanup Guacamole connection
+    if session.guacamole_connection_id:
+        try:
+            await guacamole_client.delete_connection(session.guacamole_connection_id)
+        except Exception as e:
+            print(f"Warning: Guacamole cleanup failed for session {session_id}: {e}")
+
     # Cleanup RDS session if it was created
     if session.rds_session_id:
         try:
@@ -175,7 +207,6 @@ async def end_session(
                 {"SessionId": session.rds_session_id},
             )
         except Exception as e:
-            # Log but continue with DB update
             print(f"Warning: WinRM cleanup failed for session {session_id}: {e}")
 
     # Update session status

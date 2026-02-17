@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.database import async_session_factory
 from app.models.audit import AuditLog
 from app.models.session import Session
+from app.services.guacamole_client import GuacamoleClient
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +28,12 @@ async def _log_audit(action_type: str, session_id: uuid.UUID) -> None:
 async def session_timeout_monitor() -> None:
     """
     Runs every SESSION_CHECK_INTERVAL seconds.
-    - Hard timeout (SESSION_HARD_TIMEOUT): terminates session.
+    - Hard timeout (SESSION_HARD_TIMEOUT): terminates session and cleans up Guacamole connection.
     - Idle timeout (SESSION_IDLE_TIMEOUT): sets status to 'idle_warning'.
     """
     logger.info("Session timeout monitor started")
+    guacamole_client = GuacamoleClient()
+
     while True:
         try:
             await asyncio.sleep(settings.SESSION_CHECK_INTERVAL)
@@ -54,6 +57,13 @@ async def session_timeout_monitor() -> None:
                 idle_seconds = (now - last_active).total_seconds()
 
                 if total_seconds >= settings.SESSION_HARD_TIMEOUT:
+                    # Cleanup Guacamole connection if exists
+                    if s.guacamole_connection_id:
+                        try:
+                            await guacamole_client.delete_connection(s.guacamole_connection_id)
+                        except Exception as e:
+                            logger.warning("Guacamole cleanup failed for session %s: %s", s.id, e)
+
                     async with async_session_factory() as db:
                         session_row = await db.get(Session, s.id)
                         if session_row and session_row.ended_at is None:
@@ -84,8 +94,11 @@ async def orphaned_session_cleanup() -> None:
     Runs every hour.
     Terminates sessions that are still 'active'/'idle_warning' but started
     more than 2× the hard timeout ago (clearly orphaned).
+    Also cleans up their Guacamole connections.
     """
     logger.info("Orphaned session cleanup started")
+    guacamole_client = GuacamoleClient()
+
     while True:
         try:
             await asyncio.sleep(3600)
@@ -104,6 +117,13 @@ async def orphaned_session_cleanup() -> None:
             for s in sessions:
                 started = s.started_at.replace(tzinfo=None) if s.started_at.tzinfo else s.started_at
                 if (now - started).total_seconds() >= cutoff_seconds:
+                    # Cleanup Guacamole connection if exists
+                    if s.guacamole_connection_id:
+                        try:
+                            await guacamole_client.delete_connection(s.guacamole_connection_id)
+                        except Exception as e:
+                            logger.warning("Guacamole cleanup failed for orphaned session %s: %s", s.id, e)
+
                     async with async_session_factory() as db:
                         session_row = await db.get(Session, s.id)
                         if session_row and session_row.ended_at is None:
