@@ -1,8 +1,13 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import AuthCallbackPage from './pages/AuthCallbackPage';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import AuthCallbackPage from './pages/AuthCallbackPage';
+import DashboardPage from './pages/DashboardPage';
+import LoginPage from './pages/LoginPage';
+import AssignmentsPage from './pages/admin/AssignmentsPage';
+import AuditLogsPage from './pages/admin/AuditLogsPage';
+import SessionsPage from './pages/admin/SessionsPage';
+import SystemHealthPage from './pages/admin/SystemHealthPage';
 
 function App() {
   return (
@@ -17,6 +22,20 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/admin/sessions" replace />} />
+        <Route path="sessions" element={<SessionsPage />} />
+        <Route path="assignments" element={<AssignmentsPage />} />
+        <Route path="audit-logs" element={<AuditLogsPage />} />
+        <Route path="health" element={<SystemHealthPage />} />
+      </Route>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

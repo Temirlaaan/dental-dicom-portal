@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function DashboardPage() {
@@ -18,9 +19,14 @@ export default function DashboardPage() {
       </div>
       <p>Patient list and session management will be implemented in upcoming tasks.</p>
       {user?.role === 'admin' && (
-        <p style={{ color: '#666', marginTop: '10px' }}>
-          Admin dashboard features (session monitoring, assignments, audit logs) coming soon.
-        </p>
+        <div style={{ marginTop: '16px' }}>
+          <Link
+            to="/admin"
+            style={{ display: 'inline-block', padding: '10px 20px', background: '#1e293b', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 500 }}
+          >
+            Go to Admin Dashboard →
+          </Link>
+        </div>
       )}
     </div>
   );
