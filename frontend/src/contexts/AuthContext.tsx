@@ -18,7 +18,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8180';
+const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL || 'http://10.121.245.146:8180';
 const KEYCLOAK_REALM = import.meta.env.VITE_KEYCLOAK_REALM || 'dental-portal';
 const KEYCLOAK_CLIENT_ID = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'dental-frontend';
 const REDIRECT_URI = `${window.location.origin}/auth/callback`;

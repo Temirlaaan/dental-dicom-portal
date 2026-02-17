@@ -11,7 +11,7 @@ from app.core.security import CurrentUser, get_current_user
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 KC_BASE = f"{settings.KEYCLOAK_URL}/realms/{settings.KEYCLOAK_REALM}/protocol/openid-connect"
-FRONTEND_URL = "http://localhost:5173"
+FRONTEND_URL = "http://10.121.245.146:5173"
 
 
 @router.get("/login")
