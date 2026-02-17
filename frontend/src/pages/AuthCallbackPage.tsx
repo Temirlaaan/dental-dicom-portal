@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,8 +9,13 @@ export default function AuthCallbackPage() {
   const { handleCallback } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    // Prevent double execution in React StrictMode
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const code = searchParams.get('code');
     if (!code) {
       setError('No authorization code received');

@@ -22,7 +22,7 @@ export function usePatients(params: PatientsParams = {}) {
   return useQuery<PaginatedList<Patient>>({
     queryKey: ['patients', params],
     queryFn: () =>
-      api.get('/api/patients', { params }).then((r) => r.data),
+      api.get('/patients', { params }).then((r) => r.data),
   });
 }
 
@@ -31,7 +31,7 @@ export function usePatients(params: PatientsParams = {}) {
 export function useDoctors() {
   return useQuery<Doctor[]>({
     queryKey: ['doctors'],
-    queryFn: () => api.get('/api/doctors').then((r) => r.data),
+    queryFn: () => api.get('/doctors').then((r) => r.data),
   });
 }
 
@@ -45,7 +45,7 @@ interface AssignmentsParams {
 export function useAssignments(params: AssignmentsParams = {}) {
   return useQuery<Assignment[]>({
     queryKey: ['assignments', params],
-    queryFn: () => api.get('/api/assignments', { params }).then((r) => r.data),
+    queryFn: () => api.get('/assignments', { params }).then((r) => r.data),
   });
 }
 
@@ -53,7 +53,7 @@ export function useCreateAssignment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: { patient_id: string; doctor_id: string }) =>
-      api.post('/api/assignments', body).then((r) => r.data as Assignment),
+      api.post('/assignments', body).then((r) => r.data as Assignment),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assignments'] }),
   });
 }
@@ -84,7 +84,7 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
   );
   return useQuery<PaginatedList<AuditLog>>({
     queryKey: ['audit-logs', params],
-    queryFn: () => api.get('/api/audit-logs', { params }).then((r) => r.data),
+    queryFn: () => api.get('/audit-logs', { params }).then((r) => r.data),
   });
 }
 
@@ -112,7 +112,7 @@ export function useHealth() {
 export function useSessions() {
   return useQuery<Session[]>({
     queryKey: ['sessions'],
-    queryFn: () => api.get('/api/sessions').then((r) => r.data),
+    queryFn: () => api.get('/sessions').then((r) => r.data),
     refetchInterval: 30_000,
     retry: false,
   });
