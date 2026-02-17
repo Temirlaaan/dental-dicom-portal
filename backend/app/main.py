@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware.audit import AuditMiddleware
-from app.routers import assignments, audit_logs, auth, doctors, health, patients
+from app.routers import assignments, audit_logs, auth, doctors, health, patients, sessions
 from app.services.session_monitor import orphaned_session_cleanup, session_timeout_monitor
 
 
@@ -33,8 +33,9 @@ app.add_middleware(
 app.add_middleware(AuditMiddleware)
 
 app.include_router(health.router, tags=["health"])
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api")
 app.include_router(patients.router, prefix="/api")
 app.include_router(assignments.router, prefix="/api")
 app.include_router(audit_logs.router, prefix="/api")
 app.include_router(doctors.router, prefix="/api")
+app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
