@@ -1,72 +1,59 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
-const NAV_ITEMS = [
-  { to: '/admin/sessions', label: 'Sessions' },
-  { to: '/admin/assignments', label: 'Assignments' },
-  { to: '/admin/audit-logs', label: 'Audit Logs' },
-  { to: '/admin/health', label: 'System Health' },
-];
+import { Button } from './ui/button';
+import { Separator } from './ui/separator';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+
+  const navLinks = [
+    { to: '/admin/sessions', label: 'Sessions' },
+    { to: '/admin/assignments', label: 'Assignments' },
+    { to: '/admin/audit-logs', label: 'Audit Logs' },
+    { to: '/admin/health', label: 'System Health' },
+  ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside style={{
-        width: 220,
-        background: '#1e293b',
-        color: '#f1f5f9',
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-      }}>
-        <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid #334155' }}>
-          <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 4 }}>Admin Dashboard</div>
-          <div style={{ fontWeight: 600, fontSize: 15 }}>{user?.name}</div>
+      <aside className="w-56 bg-slate-900 text-slate-100 flex flex-col flex-shrink-0">
+        <div className="px-5 py-4 border-b border-slate-700">
+          <h1 className="text-white font-bold text-lg">Admin Dashboard</h1>
+          <p className="text-slate-400 text-sm mt-1">{user?.name}</p>
         </div>
 
-        <nav style={{ flex: 1, padding: '8px 0' }}>
-          {NAV_ITEMS.map(({ to, label }) => (
+        <nav className="flex-1 py-4">
+          {navLinks.map((link) => (
             <NavLink
-              key={to}
-              to={to}
-              style={({ isActive }) => ({
-                display: 'block',
-                padding: '10px 20px',
-                color: isActive ? '#fff' : '#94a3b8',
-                background: isActive ? '#334155' : 'transparent',
-                textDecoration: 'none',
-                fontSize: 14,
-                fontWeight: isActive ? 600 : 400,
-                borderLeft: isActive ? '3px solid #3b82f6' : '3px solid transparent',
-              })}
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) =>
+                `block px-5 py-2.5 mx-2 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-slate-800 text-white border-l-2 border-blue-500 pl-[18px]'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`
+              }
             >
-              {label}
+              {link.label}
             </NavLink>
           ))}
         </nav>
 
-        <div style={{ padding: '12px 16px', borderTop: '1px solid #334155', display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => navigate('/dashboard')}
-            style={{ flex: 1, padding: '7px 0', background: '#334155', color: '#f1f5f9', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={logout}
-            style={{ flex: 1, padding: '7px 0', background: '#475569', color: '#f1f5f9', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
-          >
+        <Separator className="bg-slate-700" />
+
+        <div className="p-4 flex gap-2">
+          <Button variant="ghost" size="sm" asChild className="flex-1 text-slate-300 hover:text-white hover:bg-slate-800">
+            <Link to="/">Dashboard</Link>
+          </Button>
+          <Button onClick={logout} variant="ghost" size="sm" className="flex-1 text-slate-300 hover:text-white hover:bg-slate-800">
             Logout
-          </button>
+          </Button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main style={{ flex: 1, background: '#f8fafc', overflow: 'auto' }}>
+      <main className="flex-1 overflow-auto bg-slate-50">
         <Outlet />
       </main>
     </div>

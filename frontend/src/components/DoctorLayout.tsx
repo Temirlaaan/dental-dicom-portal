@@ -1,52 +1,41 @@
 import { Link, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSession } from '../contexts/SessionContext';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 export default function DoctorLayout() {
   const { user, logout } = useAuth();
   const { activeSession } = useSession();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header style={{
-        height: 52, background: '#1e293b', color: '#f1f5f9',
-        display: 'flex', alignItems: 'center', padding: '0 24px',
-        gap: 16, flexShrink: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-      }}>
-        <Link to="/patients" style={{ color: '#f1f5f9', textDecoration: 'none', fontWeight: 700, fontSize: 16 }}>
+      <header className="h-14 bg-slate-900 text-slate-100 flex items-center px-6 gap-4 shadow-md flex-shrink-0">
+        <Link to="/patients" className="text-white font-bold text-lg hover:text-slate-200 transition-colors">
           Dental DICOM Portal
         </Link>
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {activeSession && (
-          <Link
-            to={`/session/${activeSession.id}`}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '5px 12px', borderRadius: 20,
-              background: '#16a34a', color: '#fff',
-              textDecoration: 'none', fontSize: 13, fontWeight: 600,
-            }}
-          >
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#86efac', display: 'inline-block' }} />
-            Active Session
+          <Link to={`/session/${activeSession.id}`}>
+            <Badge variant="success" className="gap-2 px-3 py-1.5 hover:bg-green-200 transition-colors cursor-pointer">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              Active Session
+            </Badge>
           </Link>
         )}
 
-        <span style={{ fontSize: 14, color: '#94a3b8' }}>{user?.name}</span>
+        <span className="text-sm text-slate-300">{user?.name}</span>
 
-        <button
-          onClick={logout}
-          style={{ padding: '5px 14px', background: '#334155', color: '#f1f5f9', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
-        >
+        <Button onClick={logout} variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-slate-800">
           Logout
-        </button>
+        </Button>
       </header>
 
       {/* Page content */}
-      <main style={{ flex: 1, overflow: 'auto', background: '#f8fafc' }}>
+      <main className="flex-1 overflow-auto bg-slate-50">
         <Outlet />
       </main>
     </div>

@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { buildExportUrl, useAuditLogs } from '../../services/adminApi';
 import type { AuditLogFilters } from '../../services/adminApi';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent } from '../../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 
 const PAGE_SIZE = 50;
-
 const ACTION_TYPES = ['', 'create', 'update', 'delete', 'session_terminated', 'session_idle_warning', 'session_orphan_cleanup'];
 
 export default function AuditLogsPage() {
@@ -24,118 +28,108 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Audit Logs</h1>
-        <a
-          href={buildExportUrl(filters)}
-          download="audit_logs.csv"
-          style={{ padding: '8px 16px', background: '#16a34a', color: '#fff', borderRadius: 6, textDecoration: 'none', fontSize: 14, fontWeight: 500 }}
-        >
-          Export CSV
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-5">
+        <h1 className="text-2xl font-bold text-slate-900">Audit Logs</h1>
+        <a href={buildExportUrl(filters)} download="audit_logs.csv">
+          <Button variant="success">Export CSV</Button>
         </a>
       </div>
 
-      {/* Filters */}
-      <div style={{ background: '#fff', borderRadius: 8, padding: 16, marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>From</label>
-          <input
-            type="datetime-local"
-            onChange={(e) => setFilter('date_from', e.target.value ? new Date(e.target.value).toISOString() : '')}
-            style={{ padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }}
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>To</label>
-          <input
-            type="datetime-local"
-            onChange={(e) => setFilter('date_to', e.target.value ? new Date(e.target.value).toISOString() : '')}
-            style={{ padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13 }}
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Action Type</label>
-          <select
-            onChange={(e) => setFilter('action_type', e.target.value)}
-            style={{ padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, minWidth: 160 }}
-          >
-            {ACTION_TYPES.map((a) => (
-              <option key={a} value={a}>{a || 'All actions'}</option>
-            ))}
-          </select>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>User ID</label>
-          <input
-            type="text"
-            placeholder="UUID…"
-            onChange={(e) => setFilter('user_id', e.target.value)}
-            style={{ padding: '6px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 13, width: 220 }}
-          />
-        </div>
-      </div>
+      <Card className="mb-5">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-slate-500 font-medium">From</label>
+              <Input
+                type="datetime-local"
+                onChange={(e) => setFilter('date_from', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                className="w-48 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-slate-500 font-medium">To</label>
+              <Input
+                type="datetime-local"
+                onChange={(e) => setFilter('date_to', e.target.value ? new Date(e.target.value).toISOString() : '')}
+                className="w-48 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-slate-500 font-medium">Action Type</label>
+              <select
+                onChange={(e) => setFilter('action_type', e.target.value)}
+                className="h-9 w-40 px-3 text-sm rounded-md border border-slate-200"
+              >
+                {ACTION_TYPES.map((a) => (
+                  <option key={a} value={a}>{a || 'All actions'}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-slate-500 font-medium">User ID</label>
+              <Input
+                type="text"
+                placeholder="UUID…"
+                onChange={(e) => setFilter('user_id', e.target.value)}
+                className="w-56 text-sm"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {isLoading && <p style={{ color: '#64748b' }}>Loading…</p>}
-      {isError && <p style={{ color: '#dc2626' }}>Failed to load audit logs.</p>}
+      {isLoading && <p className="text-slate-500">Loading…</p>}
+      {isError && <p className="text-red-600">Failed to load audit logs.</p>}
 
-      <div style={{ background: '#fff', borderRadius: 8, overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
-              {['Timestamp', 'User ID', 'Role', 'Action', 'Resource', 'Resource ID', 'IP'].map((h) => (
-                <th key={h} style={{ padding: '12px 14px', fontSize: 12, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>{h}</th>
+      <Card>
+        <div className="overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap">Timestamp</TableHead>
+                <TableHead className="whitespace-nowrap">User ID</TableHead>
+                <TableHead className="whitespace-nowrap">Role</TableHead>
+                <TableHead className="whitespace-nowrap">Action</TableHead>
+                <TableHead className="whitespace-nowrap">Resource</TableHead>
+                <TableHead className="whitespace-nowrap">Resource ID</TableHead>
+                <TableHead className="whitespace-nowrap">IP</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {logs.length === 0 && !isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-slate-400 py-10">No audit logs found</TableCell>
+                </TableRow>
+              )}
+              {logs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</TableCell>
+                  <TableCell className="text-xs max-w-32 truncate" title={log.user_id ?? ''}>{log.user_id?.slice(0, 8) ?? '—'}</TableCell>
+                  <TableCell className="text-xs">{log.user_role ?? '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{log.action_type}</Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{log.resource_type}</TableCell>
+                  <TableCell className="text-xs text-slate-500 max-w-28 truncate" title={log.resource_id ?? ''}>{log.resource_id?.slice(0, 8) ?? '—'}</TableCell>
+                  <TableCell className="text-xs text-slate-500">{log.ip_address ?? '—'}</TableCell>
+                </TableRow>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {logs.length === 0 && !isLoading && (
-              <tr>
-                <td colSpan={7} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>No audit logs found</td>
-              </tr>
-            )}
-            {logs.map((log) => (
-              <tr key={log.id} style={{ borderTop: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap' }}>{new Date(log.timestamp).toLocaleString()}</td>
-                <td style={{ padding: '10px 14px', fontSize: 12, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.user_id ?? ''}>{log.user_id?.slice(0, 8) ?? '—'}</td>
-                <td style={{ padding: '10px 14px', fontSize: 12 }}>{log.user_role ?? '—'}</td>
-                <td style={{ padding: '10px 14px' }}>
-                  <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: 10, fontSize: 12, fontWeight: 500 }}>{log.action_type}</span>
-                </td>
-                <td style={{ padding: '10px 14px', fontSize: 13 }}>{log.resource_type}</td>
-                <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748b', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.resource_id ?? ''}>{log.resource_id?.slice(0, 8) ?? '—'}</td>
-                <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748b' }}>{log.ip_address ?? '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
 
-      {/* Pagination */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-        <span style={{ fontSize: 13, color: '#64748b' }}>
-          {total} total records
-        </span>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <PagBtn label="«" onClick={() => setOffset(0)} disabled={currentPage === 1} />
-          <PagBtn label="‹" onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))} disabled={currentPage === 1} />
-          <span style={{ fontSize: 13, padding: '0 8px' }}>Page {currentPage} of {totalPages}</span>
-          <PagBtn label="›" onClick={() => setOffset(offset + PAGE_SIZE)} disabled={currentPage >= totalPages} />
-          <PagBtn label="»" onClick={() => setOffset((totalPages - 1) * PAGE_SIZE)} disabled={currentPage >= totalPages} />
+      <div className="flex items-center justify-between mt-4">
+        <span className="text-sm text-slate-500">{total} total records</span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setOffset(0)} disabled={currentPage === 1}>«</Button>
+          <Button variant="outline" size="sm" onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))} disabled={currentPage === 1}>‹</Button>
+          <span className="text-sm px-2">Page {currentPage} of {totalPages}</span>
+          <Button variant="outline" size="sm" onClick={() => setOffset(offset + PAGE_SIZE)} disabled={currentPage >= totalPages}>›</Button>
+          <Button variant="outline" size="sm" onClick={() => setOffset((totalPages - 1) * PAGE_SIZE)} disabled={currentPage >= totalPages}>»</Button>
         </div>
       </div>
     </div>
-  );
-}
-
-function PagBtn({ label, onClick, disabled }: { label: string; onClick: () => void; disabled: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{ padding: '5px 10px', border: '1px solid #e2e8f0', borderRadius: 6, background: disabled ? '#f8fafc' : '#fff', color: disabled ? '#cbd5e1' : '#374151', cursor: disabled ? 'not-allowed' : 'pointer', fontSize: 14 }}
-    >
-      {label}
-    </button>
   );
 }
