@@ -1,0 +1,11 @@
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+sqlalchemy[asyncio]==2.0.27
+asyncpg==0.29.0
+alembic==1.13.1
+pydantic-settings==2.1.0
+pydicom==2.4.4
+watchdog==3.0.0
+pywinrm==0.4.3
+python-keycloak==3.9.0
+python-multipart==0.0.9
