@@ -1,0 +1,11 @@
+[Unit]
+Description=Dental DICOM Portal — Hourly Session Cleanup Timer
+Documentation=https://github.com/Temirlaaan/dental-dicom-portal
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=1h
+Unit=dental-session-cleanup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Dental DICOM Portal — Session Cleanup (oneshot)
+Documentation=https://github.com/Temirlaaan/dental-dicom-portal
+
+[Service]
+Type=oneshot
+User=dental-app
+Group=dental-app
+WorkingDirectory=/opt/dental-dicom-portal/backend
+EnvironmentFile=/opt/dental-dicom-portal/.env.production
+ExecStart=/opt/dental-dicom-portal/venv/bin/python -c \
+    "import asyncio; from app.services.session_monitor import orphaned_session_cleanup_once; asyncio.run(orphaned_session_cleanup_once())"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dental-session-cleanup

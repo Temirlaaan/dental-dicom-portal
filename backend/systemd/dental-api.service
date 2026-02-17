@@ -1,0 +1,26 @@
+[Unit]
+Description=Dental DICOM Portal — FastAPI Backend
+Documentation=https://github.com/Temirlaaan/dental-dicom-portal
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=dental-app
+Group=dental-app
+WorkingDirectory=/opt/dental-dicom-portal/backend
+EnvironmentFile=/opt/dental-dicom-portal/.env.production
+ExecStart=/opt/dental-dicom-portal/venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 4 \
+    --proxy-headers \
+    --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dental-api
+
+[Install]
+WantedBy=multi-user.target
