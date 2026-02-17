@@ -14,11 +14,18 @@ class Settings(BaseSettings):
 
     # Guacamole
     GUACAMOLE_URL: str = "http://localhost:8080/guacamole"
+    GUACAMOLE_ADMIN_USER: str = "guacadmin"  # Default admin username
+    GUACAMOLE_ADMIN_PASSWORD: str = "guacadmin"  # Change in production
 
     # Windows Server (WinRM)
     WINRM_HOST: str = ""
     WINRM_USER: str = ""
     WINRM_PASSWORD: str = ""
+
+    # Windows RDP Configuration (for Guacamole connections)
+    WINDOWS_RDP_HOST: str = ""  # Windows Server hostname/IP for RDP
+    WINDOWS_RDP_PORT: int = 3389  # Default RDP port
+    WINDOWS_RDP_PASSWORD: str = ""  # Password for dtx_user accounts
 
     # DICOM
     DICOM_WATCH_DIR: str = "/mnt/dicom-export"
