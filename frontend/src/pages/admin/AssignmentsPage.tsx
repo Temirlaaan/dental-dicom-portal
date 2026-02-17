@@ -7,6 +7,11 @@ import {
   usePatients,
 } from '../../services/adminApi';
 import type { Doctor, Patient } from '../../types';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 
 export default function AssignmentsPage() {
   const { data: patientsData, isLoading: patientsLoading } = usePatients({ limit: 200 });
@@ -71,171 +76,145 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Patient Assignments</h1>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">Patient Assignments</h1>
         {selectedIds.size > 0 && (
-          <button
-            onClick={() => { setBulkModal(true); setSelectedDoctorId(''); }}
-            style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer' }}
-          >
+          <Button onClick={() => { setBulkModal(true); setSelectedDoctorId(''); }}>
             Bulk Assign ({selectedIds.size} selected)
-          </button>
+          </Button>
         )}
       </div>
 
-      {isLoading && <p style={{ color: '#64748b' }}>Loading…</p>}
+      {isLoading && <p className="text-slate-500">Loading…</p>}
 
-      <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
-              <th style={{ padding: '12px 16px', width: 40 }}>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10">
                 <input
                   type="checkbox"
                   checked={selectedIds.size === patients.length && patients.length > 0}
                   onChange={toggleAll}
+                  className="rounded"
                 />
-              </th>
-              {['Patient Name', 'Patient ID', 'Studies', 'Current Doctor', 'Actions'].map((h) => (
-                <th key={h} style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#475569' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+              <TableHead>Patient Name</TableHead>
+              <TableHead>Patient ID</TableHead>
+              <TableHead>Studies</TableHead>
+              <TableHead>Current Doctor</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {patients.length === 0 && !isLoading && (
-              <tr>
-                <td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>No patients found</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-slate-400 py-10">No patients found</TableCell>
+              </TableRow>
             )}
             {patients.map((p) => {
               const doc = getDoctorForPatient(p.id);
               const assignmentId = getAssignmentId(p.id);
               return (
-                <tr key={p.id} style={{ borderTop: '1px solid #f1f5f9', background: selectedIds.has(p.id) ? '#eff6ff' : undefined }}>
-                  <td style={{ padding: '12px 16px' }}>
-                    <input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} />
-                  </td>
-                  <td style={{ padding: '12px 16px', fontWeight: 500 }}>{p.name}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#64748b' }}>{p.patient_id}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 13 }}>{p.study_count}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 14 }}>
+                <TableRow key={p.id} className={selectedIds.has(p.id) ? 'bg-blue-50' : ''}>
+                  <TableCell>
+                    <input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded" />
+                  </TableCell>
+                  <TableCell className="font-medium text-slate-900">{p.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{p.patient_id}</Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{p.study_count}</TableCell>
+                  <TableCell>
                     {doc ? (
-                      <span style={{ color: '#16a34a' }}>{doc.name}</span>
+                      <span className="text-green-700 font-medium text-sm">{doc.name}</span>
                     ) : (
-                      <span style={{ color: '#94a3b8' }}>Unassigned</span>
+                      <span className="text-slate-400 text-sm">Unassigned</span>
                     )}
-                  </td>
-                  <td style={{ padding: '12px 16px', display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={() => openAssignModal(p.id)}
-                      style={{ padding: '5px 12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
-                    >
-                      {doc ? 'Reassign' : 'Assign'}
-                    </button>
-                    {assignmentId && (
-                      <button
-                        onClick={() => setConfirmDeleteId(assignmentId)}
-                        style={{ padding: '5px 12px', background: '#fff', color: '#dc2626', border: '1px solid #fca5a5', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}
-                      >
-                        Unassign
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => openAssignModal(p.id)}>
+                        {doc ? 'Reassign' : 'Assign'}
+                      </Button>
+                      {assignmentId && (
+                        <Button size="sm" variant="outline" onClick={() => setConfirmDeleteId(assignmentId)} className="text-red-600 border-red-200 hover:bg-red-50">
+                          Unassign
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Assign modal */}
-      {modalPatientId && (
-        <Modal title={`Assign Patient`} onClose={() => setModalPatientId(null)}>
-          <DoctorSelect doctors={doctorsList} value={selectedDoctorId} onChange={setSelectedDoctorId} />
-          <ModalButtons
-            onCancel={() => setModalPatientId(null)}
-            onConfirm={async () => {
-              await handleAssign(modalPatientId);
-              setModalPatientId(null);
-              setSelectedDoctorId('');
-            }}
-            disabled={!selectedDoctorId}
-            label="Assign"
-          />
-        </Modal>
-      )}
+      <Dialog open={!!modalPatientId} onOpenChange={() => setModalPatientId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Patient</DialogTitle>
+          </DialogHeader>
+          <select
+            value={selectedDoctorId}
+            onChange={(e) => setSelectedDoctorId(e.target.value)}
+            className="w-full h-9 px-3 text-sm rounded-md border border-slate-200 mb-2"
+          >
+            <option value="">Select a doctor…</option>
+            {doctorsList.map((d) => (
+              <option key={d.id} value={d.id}>{d.name} ({d.email})</option>
+            ))}
+          </select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalPatientId(null)}>Cancel</Button>
+            <Button disabled={!selectedDoctorId} onClick={async () => {
+              if (modalPatientId) { await handleAssign(modalPatientId); setModalPatientId(null); setSelectedDoctorId(''); }
+            }}>Assign</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk assign modal */}
-      {bulkModal && (
-        <Modal title={`Bulk Assign ${selectedIds.size} Patients`} onClose={() => setBulkModal(false)}>
-          <DoctorSelect doctors={doctorsList} value={selectedDoctorId} onChange={setSelectedDoctorId} />
-          <ModalButtons onCancel={() => setBulkModal(false)} onConfirm={handleBulkAssign} disabled={!selectedDoctorId} label="Assign All" />
-        </Modal>
-      )}
+      <Dialog open={bulkModal} onOpenChange={setBulkModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Assign {selectedIds.size} Patients</DialogTitle>
+          </DialogHeader>
+          <select
+            value={selectedDoctorId}
+            onChange={(e) => setSelectedDoctorId(e.target.value)}
+            className="w-full h-9 px-3 text-sm rounded-md border border-slate-200 mb-2"
+          >
+            <option value="">Select a doctor…</option>
+            {doctorsList.map((d) => (
+              <option key={d.id} value={d.id}>{d.name} ({d.email})</option>
+            ))}
+          </select>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkModal(false)}>Cancel</Button>
+            <Button disabled={!selectedDoctorId} onClick={handleBulkAssign}>Assign All</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Unassign confirm */}
-      {confirmDeleteId && (
-        <Modal title="Confirm Unassign" onClose={() => setConfirmDeleteId(null)}>
-          <p style={{ color: '#475569', fontSize: 14, marginTop: 0 }}>Remove this patient-doctor assignment?</p>
-          <ModalButtons
-            onCancel={() => setConfirmDeleteId(null)}
-            onConfirm={async () => {
-              await deleteAssignment.mutateAsync(confirmDeleteId);
-              setConfirmDeleteId(null);
-            }}
-            label="Unassign"
-            danger
-          />
-        </Modal>
-      )}
-    </div>
-  );
-}
-
-function Modal({ title, children }: { title: string; children: React.ReactNode; onClose?: () => void }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: 28, maxWidth: 420, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-        <h3 style={{ margin: '0 0 16px' }}>{title}</h3>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function DoctorSelect({ doctors, value, onChange }: { doctors: Doctor[]; value: string; onChange: (v: string) => void }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{ width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 14, marginBottom: 20 }}
-    >
-      <option value="">Select a doctor…</option>
-      {doctors.map((d) => (
-        <option key={d.id} value={d.id}>{d.name} ({d.email})</option>
-      ))}
-    </select>
-  );
-}
-
-function ModalButtons({ onCancel, onConfirm, disabled, label, danger }: {
-  onCancel: () => void;
-  onConfirm: () => void;
-  disabled?: boolean;
-  label: string;
-  danger?: boolean;
-}) {
-  return (
-    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-      <button onClick={onCancel} style={{ padding: '8px 16px', border: '1px solid #e2e8f0', borderRadius: 6, background: '#fff', cursor: 'pointer' }}>Cancel</button>
-      <button
-        onClick={onConfirm}
-        disabled={disabled}
-        style={{ padding: '8px 16px', background: danger ? '#dc2626' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1 }}
-      >
-        {label}
-      </button>
+      <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Unassign</DialogTitle>
+            <DialogDescription>Remove this patient-doctor assignment?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => {
+              if (confirmDeleteId) { await deleteAssignment.mutateAsync(confirmDeleteId); setConfirmDeleteId(null); }
+            }}>Unassign</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

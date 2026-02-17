@@ -1,25 +1,13 @@
 import { useHealth } from '../../services/adminApi';
+import { Badge } from '../../components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 
 function StatusBadge({ ok }: { ok: boolean }) {
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '4px 12px', borderRadius: 12, fontSize: 13, fontWeight: 600,
-      background: ok ? '#dcfce7' : '#fee2e2',
-      color: ok ? '#16a34a' : '#dc2626',
-    }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: ok ? '#16a34a' : '#dc2626', display: 'inline-block' }} />
+    <Badge variant={ok ? 'success' : 'destructive'} className="gap-1.5">
+      <span className={`w-2 h-2 rounded-full ${ok ? 'bg-green-500' : 'bg-red-500'}`} />
       {ok ? 'Healthy' : 'Unavailable'}
-    </span>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: '#fff', borderRadius: 10, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', minWidth: 220 }}>
-      <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>{title}</div>
-      {children}
-    </div>
+    </Badge>
   );
 }
 
@@ -29,56 +17,81 @@ export default function SystemHealthPage() {
   const apiOk = !isError && !!data;
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>System Health</h1>
-        <span style={{ fontSize: 12, color: '#94a3b8' }}>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">System Health</h1>
+        <span className="text-xs text-slate-500">
           {dataUpdatedAt ? `Last updated: ${new Date(dataUpdatedAt).toLocaleTimeString()}` : 'Checking…'}
         </span>
       </div>
 
-      {isLoading && <p style={{ color: '#64748b' }}>Checking system status…</p>}
+      {isLoading && <p className="text-slate-500">Checking system status…</p>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-        <Card title="API Backend">
-          <StatusBadge ok={apiOk} />
-          {data && (
-            <div style={{ marginTop: 10, fontSize: 13, color: '#64748b' }}>
-              Version: <strong>{data.version}</strong>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs uppercase text-slate-500 font-semibold tracking-wide">API Backend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StatusBadge ok={apiOk} />
+            {data && (
+              <div className="mt-2 text-sm text-slate-600">
+                Version: <strong>{data.version}</strong>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs uppercase text-slate-500 font-semibold tracking-wide">Database</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StatusBadge ok={apiOk} />
+            <div className="mt-2 text-sm text-slate-600">
+              PostgreSQL connection via API health check.
             </div>
-          )}
+          </CardContent>
         </Card>
 
-        <Card title="Database">
-          <StatusBadge ok={apiOk} />
-          <div style={{ marginTop: 10, fontSize: 13, color: '#64748b' }}>
-            PostgreSQL connection via API health check.
-          </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs uppercase text-slate-500 font-semibold tracking-wide">Active Sessions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-slate-900">—</div>
+            <div className="text-sm text-slate-400 mt-1">Sessions API pending (Issue #3)</div>
+          </CardContent>
         </Card>
 
-        <Card title="Active Sessions">
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#1e293b' }}>—</div>
-          <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>Sessions API pending (Issue #3)</div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs uppercase text-slate-500 font-semibold tracking-wide">Keycloak</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StatusBadge ok={!!localStorage.getItem('access_token')} />
+            <div className="mt-2 text-sm text-slate-600">
+              Token present in session.
+            </div>
+          </CardContent>
         </Card>
 
-        <Card title="Keycloak">
-          <StatusBadge ok={!!localStorage.getItem('access_token')} />
-          <div style={{ marginTop: 10, fontSize: 13, color: '#64748b' }}>
-            Token present in session.
-          </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs uppercase text-slate-500 font-semibold tracking-wide">Guacamole</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-slate-600">
+            Remote desktop gateway at <code className="bg-slate-100 px-1.5 py-0.5 rounded">:8080</code>
+          </CardContent>
         </Card>
 
-        <Card title="Guacamole">
-          <div style={{ fontSize: 13, color: '#64748b' }}>
-            Remote desktop gateway at{' '}
-            <code style={{ background: '#f1f5f9', padding: '1px 5px', borderRadius: 3 }}>:8080</code>
-          </div>
-        </Card>
-
-        <Card title="DICOM Watcher">
-          <div style={{ fontSize: 13, color: '#64748b' }}>
-            Filesystem watcher daemon managed by systemd (<code style={{ background: '#f1f5f9', padding: '1px 5px', borderRadius: 3 }}>dicom-watcher.service</code>).
-          </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xs uppercase text-slate-500 font-semibold tracking-wide">DICOM Watcher</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-slate-600">
+            Filesystem watcher daemon managed by systemd (<code className="bg-slate-100 px-1.5 py-0.5 rounded">dicom-watcher.service</code>).
+          </CardContent>
         </Card>
       </div>
     </div>

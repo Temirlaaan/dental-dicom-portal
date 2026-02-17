@@ -1,34 +1,45 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <p>Loading...</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-slate-500">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div style={{ textAlign: 'center' }}>
-        <h1>Dental DICOM Portal</h1>
-        <p>Session management for DTX Studio</p>
-        <button onClick={login} style={{ padding: '10px 24px', fontSize: '16px', cursor: 'pointer' }}>
-          Sign in with Keycloak
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Dental DICOM Portal</CardTitle>
+          <CardDescription>
+            Secure dental imaging management for clinics
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-600 text-center">
+            Sign in with your clinic credentials via Keycloak
+          </p>
+          <Button onClick={login} className="w-full" size="lg">
+            Sign in with Keycloak
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
