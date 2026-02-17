@@ -1,13 +1,21 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminLayout from './components/AdminLayout';
+import DoctorLayout from './components/DoctorLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './contexts/AuthContext';
 import AuthCallbackPage from './pages/AuthCallbackPage';
-import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
+import PatientsPage from './pages/PatientsPage';
+import SessionPage from './pages/SessionPage';
 import AssignmentsPage from './pages/admin/AssignmentsPage';
 import AuditLogsPage from './pages/admin/AuditLogsPage';
 import SessionsPage from './pages/admin/SessionsPage';
 import SystemHealthPage from './pages/admin/SystemHealthPage';
+
+function RoleRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={user?.role === 'admin' ? '/admin' : '/patients'} replace />;
+}
 
 function App() {
   return (
@@ -15,13 +23,17 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route
-        path="/dashboard"
+        path="/"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DoctorLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<RoleRedirect />} />
+        <Route path="patients" element={<PatientsPage />} />
+        <Route path="session/:id" element={<SessionPage />} />
+      </Route>
       <Route
         path="/admin"
         element={
@@ -36,7 +48,6 @@ function App() {
         <Route path="audit-logs" element={<AuditLogsPage />} />
         <Route path="health" element={<SystemHealthPage />} />
       </Route>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
