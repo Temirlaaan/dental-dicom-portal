@@ -8,8 +8,9 @@ class Settings(BaseSettings):
     # Keycloak
     KEYCLOAK_URL: str = "http://localhost:8180"
     KEYCLOAK_REALM: str = "dental-portal"
-    KEYCLOAK_CLIENT_ID: str = "dental-portal-backend"
-    KEYCLOAK_CLIENT_SECRET: str = ""
+    KEYCLOAK_CLIENT_ID: str = "dental-backend"
+    KEYCLOAK_CLIENT_SECRET: str = "dental-backend-secret"
+    KEYCLOAK_FRONTEND_CLIENT_ID: str = "dental-frontend"
 
     # Guacamole
     GUACAMOLE_URL: str = "http://localhost:8080/guacamole"
