@@ -2,13 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import TimeoutWarning from '../components/TimeoutWarning';
 import { useSession } from '../contexts/SessionContext';
-import { useEndSession, useSessionStatus } from '../services/doctorApi';
+import { useEndSession, useGuacamoleUrl, useSessionStatus } from '../services/doctorApi';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 
-const GUACAMOLE_URL = (import.meta.env.VITE_GUACAMOLE_URL as string | undefined) ?? '/guacamole';
 const IDLE_WARN_MS = 10 * 60 * 1000;
 const HARD_WARN_MS = 50 * 60 * 1000;
 
@@ -28,6 +27,7 @@ export default function SessionPage() {
   const { setActiveSession } = useSession();
   const endSession = useEndSession();
   const { data: session, isLoading, isError } = useSessionStatus(id);
+  const { data: guacData } = useGuacamoleUrl(session?.status === 'active' ? id : undefined);
 
   const [elapsed, setElapsed] = useState(0);
   const [idleMs, setIdleMs] = useState(0);
@@ -123,12 +123,18 @@ export default function SessionPage() {
       </div>
 
       {/* Guacamole iframe */}
-      <iframe
-        src={GUACAMOLE_URL}
-        title="DTX Studio Session"
-        allow="clipboard-read; clipboard-write"
-        className="flex-1 border-none w-full"
-      />
+      {guacData?.url ? (
+        <iframe
+          src={guacData.url}
+          title="DTX Studio Session"
+          allow="clipboard-read; clipboard-write"
+          className="flex-1 border-none w-full"
+        />
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-slate-400">
+          Connecting to remote desktop...
+        </div>
+      )}
 
       {/* Timeout warning */}
       <TimeoutWarning

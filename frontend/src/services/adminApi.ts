@@ -61,7 +61,7 @@ export function useCreateAssignment() {
 export function useDeleteAssignment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/assignments/${id}`),
+    mutationFn: (id: string) => api.delete(`/assignments/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['assignments'] }),
   });
 }
@@ -121,7 +121,7 @@ export function useSessions() {
 export function useTerminateSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/api/sessions/${id}`),
+    mutationFn: (id: string) => api.delete(`/sessions/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
   });
 }

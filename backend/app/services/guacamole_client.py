@@ -160,14 +160,17 @@ class GuacamoleClient:
         """
         Build Guacamole client URL with authentication token.
 
-        Args:
-            connection_id: Guacamole connection identifier
-            token: Authentication token
+        Uses Base64-encoded client identifier in Guacamole's format:
+        connection_id + NUL + "c" + NUL + datasource
 
-        Returns:
-            url (str): Full Guacamole client URL with token parameter
+        Returns a relative URL so it works through reverse proxy / Vite dev proxy.
         """
-        return f"{self.base_url}/#/client/{connection_id}?token={token}"
+        import base64
+
+        client_id = base64.b64encode(
+            f"{connection_id}\0c\0postgresql".encode()
+        ).decode()
+        return f"/guacamole/#/client/{client_id}?token={token}"
 
 
 async def get_guacamole_client() -> GuacamoleClient:
