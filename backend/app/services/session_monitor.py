@@ -9,7 +9,9 @@ from app.core.config import settings
 from app.core.database import async_session_factory
 from app.models.audit import AuditLog
 from app.models.session import Session
+from app.models.vm_instance import VMInstance
 from app.services.guacamole_client import GuacamoleClient
+from app.services.winrm_client import get_winrm_client
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +27,56 @@ async def _log_audit(action_type: str, session_id: uuid.UUID) -> None:
         await db.commit()
 
 
+async def _release_vm(db, vm_instance_id: uuid.UUID | None) -> None:
+    """Release a VM back to the pool."""
+    if not vm_instance_id:
+        return
+    vm = await db.get(VMInstance, vm_instance_id)
+    if vm and vm.status == "assigned":
+        vm.status = "ready"
+        vm.doctor_id = None
+        vm.doctor_name = None
+        vm.session_id = None
+        vm.mounted_share = None
+        vm.assigned_at = None
+
+
+async def _cleanup_and_terminate_session(
+    s: Session,
+    guacamole_client: GuacamoleClient,
+    now: datetime,
+) -> None:
+    """Cleanup Guacamole, WinRM resources and release VM for a terminated session."""
+    # Cleanup Guacamole connection
+    if s.guacamole_connection_id:
+        try:
+            await guacamole_client.delete_connection(s.guacamole_connection_id)
+        except Exception as e:
+            logger.warning("Guacamole cleanup failed for session %s: %s", s.id, e)
+
+    # Cleanup VM session via WinRM
+    if s.vm_ip:
+        try:
+            winrm_client = await get_winrm_client()
+            await winrm_client.cleanup_vm_session(s.vm_ip)
+        except Exception as e:
+            logger.warning("VM cleanup failed for session %s on %s: %s", s.id, s.vm_ip, e)
+
+    # Update session and release VM
+    async with async_session_factory() as db:
+        session_row = await db.get(Session, s.id)
+        if session_row and session_row.ended_at is None:
+            session_row.status = "terminated"
+            session_row.ended_at = now
+            # Release VM back to pool
+            await _release_vm(db, session_row.vm_instance_id)
+            await db.commit()
+
+
 async def session_timeout_monitor() -> None:
     """
     Runs every SESSION_CHECK_INTERVAL seconds.
-    - Hard timeout (SESSION_HARD_TIMEOUT): terminates session and cleans up Guacamole connection.
+    - Hard timeout (SESSION_HARD_TIMEOUT): terminates session, cleans up resources, releases VM.
     - Idle timeout (SESSION_IDLE_TIMEOUT): sets status to 'idle_warning'.
     """
     logger.info("Session timeout monitor started")
@@ -57,19 +105,7 @@ async def session_timeout_monitor() -> None:
                 idle_seconds = (now - last_active).total_seconds()
 
                 if total_seconds >= settings.SESSION_HARD_TIMEOUT:
-                    # Cleanup Guacamole connection if exists
-                    if s.guacamole_connection_id:
-                        try:
-                            await guacamole_client.delete_connection(s.guacamole_connection_id)
-                        except Exception as e:
-                            logger.warning("Guacamole cleanup failed for session %s: %s", s.id, e)
-
-                    async with async_session_factory() as db:
-                        session_row = await db.get(Session, s.id)
-                        if session_row and session_row.ended_at is None:
-                            session_row.status = "terminated"
-                            session_row.ended_at = now
-                            await db.commit()
+                    await _cleanup_and_terminate_session(s, guacamole_client, now)
                     await _log_audit("session_terminated", s.id)
                     logger.info("Session %s hard-terminated (%.0fs elapsed)", s.id, total_seconds)
 
@@ -93,8 +129,8 @@ async def orphaned_session_cleanup() -> None:
     """
     Runs every hour.
     Terminates sessions that are still 'active'/'idle_warning' but started
-    more than 2× the hard timeout ago (clearly orphaned).
-    Also cleans up their Guacamole connections.
+    more than 2x the hard timeout ago (clearly orphaned).
+    Also cleans up Guacamole connections, WinRM resources, and releases VMs.
     """
     logger.info("Orphaned session cleanup started")
     guacamole_client = GuacamoleClient()
@@ -117,19 +153,7 @@ async def orphaned_session_cleanup() -> None:
             for s in sessions:
                 started = s.started_at.replace(tzinfo=None) if s.started_at.tzinfo else s.started_at
                 if (now - started).total_seconds() >= cutoff_seconds:
-                    # Cleanup Guacamole connection if exists
-                    if s.guacamole_connection_id:
-                        try:
-                            await guacamole_client.delete_connection(s.guacamole_connection_id)
-                        except Exception as e:
-                            logger.warning("Guacamole cleanup failed for orphaned session %s: %s", s.id, e)
-
-                    async with async_session_factory() as db:
-                        session_row = await db.get(Session, s.id)
-                        if session_row and session_row.ended_at is None:
-                            session_row.status = "terminated"
-                            session_row.ended_at = now
-                            await db.commit()
+                    await _cleanup_and_terminate_session(s, guacamole_client, now)
                     await _log_audit("session_orphan_cleanup", s.id)
                     logger.info("Orphaned session %s terminated", s.id)
 

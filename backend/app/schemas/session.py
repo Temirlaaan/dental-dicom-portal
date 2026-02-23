@@ -21,6 +21,8 @@ class SessionSchema(BaseModel):
     study_id: uuid.UUID | None
     guacamole_connection_id: str | None
     rds_session_id: str | None
+    vm_instance_id: uuid.UUID | None
+    vm_ip: str | None
     windows_user: str | None
     status: str
     started_at: datetime

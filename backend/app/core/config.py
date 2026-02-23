@@ -27,6 +27,16 @@ class Settings(BaseSettings):
     WINDOWS_RDP_PORT: int = 3389  # Default RDP port
     WINDOWS_RDP_PASSWORD: str = ""  # Password for dtx_user accounts
 
+    # VM Pool (1 VM = 1 doctor model)
+    VM_POOL_ENABLED: bool = True
+    VM_DEFAULT_RDP_USER: str = "Administrator"
+    VM_DEFAULT_RDP_PASSWORD: str = ""
+    SMB_SERVER: str = "10.121.245.146"
+    SMB_BASE_SHARE: str = "dicom-storage"
+    SMB_MOUNT_DRIVE: str = "Z:"
+    SMB_SERVICE_USER_PREFIX: str = "svc_"
+    SMB_SERVICE_PASSWORD: str = "Test1234"
+
     # DICOM
     DICOM_WATCH_DIR: str = "/mnt/dicom-export"
     DICOM_ERROR_DIR: str = "/mnt/dicom-error"

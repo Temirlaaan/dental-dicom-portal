@@ -4,6 +4,7 @@ from app.models.doctor import Doctor
 from app.models.assignment import PatientAssignment
 from app.models.session import Session
 from app.models.audit import AuditLog
+from app.models.vm_instance import VMInstance
 
 __all__ = [
     "Patient",
@@ -12,4 +13,5 @@ __all__ = [
     "PatientAssignment",
     "Session",
     "AuditLog",
+    "VMInstance",
 ]

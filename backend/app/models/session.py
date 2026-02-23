@@ -17,6 +17,8 @@ class Session(Base):
     study_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("studies.id"), nullable=True)
     guacamole_connection_id: Mapped[str | None] = mapped_column(String, nullable=True)
     rds_session_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    vm_instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    vm_ip: Mapped[str | None] = mapped_column(String, nullable=True)
     windows_user: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="creating", index=True)
     started_at: Mapped[datetime] = mapped_column(server_default=func.now())
