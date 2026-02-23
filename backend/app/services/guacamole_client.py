@@ -101,7 +101,7 @@ class GuacamoleClient:
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/api/session/data/mysql/connections",
+                f"{self.base_url}/api/session/data/postgresql/connections",
                 headers={"Guacamole-Token": self._admin_token},
                 json=connection_data,
             )
@@ -124,7 +124,7 @@ class GuacamoleClient:
 
         async with httpx.AsyncClient() as client:
             response = await client.delete(
-                f"{self.base_url}/api/session/data/mysql/connections/{connection_id}",
+                f"{self.base_url}/api/session/data/postgresql/connections/{connection_id}",
                 headers={"Guacamole-Token": self._admin_token},
             )
             response.raise_for_status()
